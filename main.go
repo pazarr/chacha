@@ -5,7 +5,7 @@ import (
     "encoding/json"
     "net/http"
     "log"
-    _ "github.com/mattn/go-sqlite3"
+    "bytes"
 )
 
 func msteamsReport(w http.ResponseWriter, r *http.Request) {
@@ -19,13 +19,20 @@ func msteamsReport(w http.ResponseWriter, r *http.Request) {
 		 w.Header().Add("Content-Type", "text/html")
                  http.ServeFile(w, r, "html/query.html")
         case "POST":
+		w.Header().Add("Content-Type", "application/json")
 		var messageData map[string]interface{}
+		rLog := new(bytes.Buffer)
 		err := json.NewDecoder(r.Body).Decode(&messageData)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, "%v", messageData["from"].(map[string]interface{})["name"])
+		var msteamsRespond = make(map[string]interface{})
+		msteamsRespond["text"] = "Acknowledged! Thanks " + messageData["from"].(map[string]interface{})["name"].(string)
+                msteamsRespond["type"] = "message"
+		json.NewEncoder(w).Encode(msteamsRespond)
+		json.NewEncoder(rLog).Encode(messageData)
+		fmt.Printf("recevide message: %v" ,rLog)
 	        default:
                 fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
         }
@@ -56,7 +63,7 @@ func ansibleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	argsPort := "8080"
+	argsPort := "80"
         http.HandleFunc("/msteams", msteamsReport)
 	http.HandleFunc("/", msteamsReport)
 
