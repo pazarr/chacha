@@ -6,20 +6,11 @@ import (
     "net/http"
     "log"
     "bytes"
-    "math/rand"
     "time"
     "database/sql"
     _ "github.com/go-sql-driver/mysql"
 )
 
-func reportResponds(fromUser string) map[string]interface{} {
-	praise := []string{"There you go", "Keep up the good work", "Keep it up", "Good job", "Awesome", "Top Banana", "Just Wow", "Brilliant", "Amazing work", "Top notch"}
-	var msTeamsRespondMessage = make(map[string]interface{})
-        msTeamsRespondMessage["text"] = "Acknowledged!" + praise[rand.Intn(len(praise))] + ", " + fromUser + "! Thank you!"
-        msTeamsRespondMessage["type"] = "message"
-	return msTeamsRespondMessage
-
-}
 func msteamsReport(w http.ResponseWriter, r *http.Request) {
 	database, err := sql.Open("mysql", "rw_annotation:ikljnwenkrkw9023nefi2904@tcp(10.202.60.40:3306)/annotations")
 	if err != nil {
@@ -38,7 +29,7 @@ func msteamsReport(w http.ResponseWriter, r *http.Request) {
         switch r.Method {
         case "GET":
 		 w.Header().Add("Content-Type", "text/html")
-                 http.ServeFile(w, r, "html/query.html")
+                 http.ServeFile(w, r, "/var/html/msteams-index.html")
         case "POST":
 		//Set up headers to provide json
 		w.Header().Add("Content-Type", "application/json")
@@ -61,7 +52,7 @@ func msteamsReport(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(reportResponds(messageData["from"].(map[string]interface{})["name"].(string)))
 		json.NewEncoder(rLog).Encode(messageData)
 		fmt.Printf("recevide message: %v" ,rLog)
-	        default:
+        default:
                 fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
         }
 }
